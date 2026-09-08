@@ -2,16 +2,12 @@ from flask import Flask, render_template, request, redirect, flash
 import pandas as pd
 import sqlite3
 
-from database import get_connection, inicializar_bd
+from db_supabase import *
 
 
 app = Flask(__name__)
 
 app.secret_key = "inventario-chips-secret"
-
-# Inicializar base de datos
-inicializar_bd()
-
 
 # ==========================================
 # INICIO
