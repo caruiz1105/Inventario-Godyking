@@ -6,11 +6,22 @@ from psycopg2.extras import RealDictCursor
 DATABASE_URL = os.environ.get("DATABASE_URL")
 
 def get_connection():
-    """Obtiene una conexión a Supabase"""
+    """Obtiene una conexión a Supabase forzando IPv4"""
     if not DATABASE_URL:
         raise Exception("DATABASE_URL no configurada en variables de entorno")
-    conn = psycopg2.connect(DATABASE_URL)
-    return conn
+    
+    try:
+        # Forzar conexión con hostaddr (IPv4) y timeout
+        conn = psycopg2.connect(
+            DATABASE_URL,
+            connect_timeout=10,
+            options='-c statement_timeout=30000'
+        )
+        print("✅ Conexión a Supabase establecida")
+        return conn
+    except Exception as e:
+        print(f"❌ Error al conectar a Supabase: {e}")
+        raise
 
 def obtener_personas_activas():
     """Obtiene todas las personas activas"""
