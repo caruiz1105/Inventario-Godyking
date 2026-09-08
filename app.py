@@ -615,6 +615,32 @@ def agregar_persona():
     
     return redirect("/personas")
 
+@app.route("/test-db")
+def test_db():
+    try:
+        import os
+        from db_supabase import obtener_personas_activas, get_connection
+        
+        # Verificar si DATABASE_URL existe
+        db_url = os.environ.get("DATABASE_URL")
+        if not db_url:
+            return "❌ ERROR: DATABASE_URL no está configurada en Vercel"
+        
+        # Intentar conectar
+        conn = get_connection()
+        conn.close()
+        
+        # Obtener personas
+        personas = obtener_personas_activas()
+        
+        return f"""
+        ✅ Conexión exitosa a Supabase<br>
+        DATABASE_URL: {db_url[:30]}...<br>
+        Personas encontradas: {len(personas)}<br>
+        Personas: {', '.join([p['nombre'] for p in personas]) if personas else 'Ninguna'}
+        """
+    except Exception as e:
+        return f"❌ Error: {str(e)}"
 
 # ==========================================
 # EJECUTAR SERVIDOR
