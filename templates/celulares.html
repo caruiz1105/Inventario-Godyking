@@ -1,0 +1,671 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Inventario de Celulares</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <style>
+        /* ==========================================
+           ESTILOS PARA CELULARES
+           ========================================== */
+
+        .layout {
+            display: flex;
+            min-height: 100vh;
+        }
+
+        .sidebar {
+            width: 250px;
+            background: #111827;
+            color: white;
+            padding: 25px 18px;
+            flex-shrink: 0;
+            position: fixed;
+            top: 0;
+            left: 0;
+            height: 100vh;
+            overflow-y: auto;
+            z-index: 100;
+        }
+
+        .logo {
+            font-size: 22px;
+            font-weight: bold;
+            margin-bottom: 35px;
+            padding: 0 10px;
+        }
+
+        .menu-title {
+            font-size: 11px;
+            text-transform: uppercase;
+            color: #9ca3af;
+            margin: 20px 10px 10px;
+            letter-spacing: 1px;
+        }
+
+        .menu-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 13px 12px;
+            margin-bottom: 6px;
+            border-radius: 10px;
+            color: #d1d5db;
+            text-decoration: none;
+            transition: 0.2s;
+        }
+
+        .menu-item:hover {
+            background: #1f2937;
+            color: white;
+        }
+
+        .menu-item.active {
+            background: #2563eb;
+            color: white;
+        }
+
+        .menu-item.disabled {
+            opacity: 0.45;
+            cursor: not-allowed;
+        }
+
+        .main {
+            flex: 1;
+            margin-left: 250px;
+            padding: 30px;
+            min-height: 100vh;
+            background: #f5f7fb;
+            width: calc(100% - 250px);
+        }
+
+        .topbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 20px;
+            margin-bottom: 25px;
+            flex-wrap: wrap;
+        }
+
+        .title-area h1 {
+            margin: 0;
+            font-size: 28px;
+            color: #111827;
+        }
+
+        .title-area p {
+            margin: 7px 0 0;
+            color: #6b7280;
+        }
+
+        .btn {
+            border: none;
+            border-radius: 9px;
+            padding: 11px 18px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+
+        .btn-primary {
+            background: #2563eb;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #1d4ed8;
+        }
+
+        .btn-success {
+            background: #16a34a;
+            color: white;
+        }
+
+        .btn-success:hover {
+            background: #15803d;
+        }
+
+        .btn-secondary {
+            background: #e5e7eb;
+            color: #374151;
+        }
+
+        .btn-secondary:hover {
+            background: #d1d5db;
+        }
+
+        .btn-warning {
+            background: #f59e0b;
+            color: white;
+        }
+
+        .btn-warning:hover {
+            background: #d97706;
+        }
+
+        .btn-danger {
+            background: #dc2626;
+            color: white;
+        }
+
+        .btn-danger:hover {
+            background: #b91c1c;
+        }
+
+        .btn-sm {
+            padding: 6px 12px;
+            font-size: 12px;
+            border-radius: 6px;
+        }
+
+        .flash-container {
+            margin-bottom: 20px;
+        }
+
+        .flash {
+            background: #eff6ff;
+            border: 1px solid #bfdbfe;
+            color: #1d4ed8;
+            padding: 13px 16px;
+            border-radius: 9px;
+            margin-bottom: 8px;
+        }
+
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 18px;
+            margin-bottom: 25px;
+        }
+
+        .stat-card {
+            background: white;
+            border-radius: 14px;
+            padding: 20px;
+            box-shadow: 0 3px 12px rgba(0, 0, 0, 0.05);
+        }
+
+        .stat-label {
+            color: #6b7280;
+            font-size: 14px;
+            margin-bottom: 8px;
+        }
+
+        .stat-number {
+            font-size: 30px;
+            font-weight: bold;
+        }
+
+        .stat-total {
+            color: #2563eb;
+        }
+
+        .stat-disponible {
+            color: #16a34a;
+        }
+
+        .stat-reservado {
+            color: #f59e0b;
+        }
+
+        .stat-vendido {
+            color: #dc2626;
+        }
+
+        .panel {
+            background: white;
+            border-radius: 14px;
+            box-shadow: 0 3px 12px rgba(0, 0, 0, 0.05);
+            overflow: hidden;
+        }
+
+        .panel-header {
+            padding: 20px;
+            border-bottom: 1px solid #e5e7eb;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+
+        .panel-header h2 {
+            margin: 0;
+            font-size: 19px;
+        }
+
+        .search-box {
+            position: relative;
+            width: 320px;
+        }
+
+        .search-box input {
+            width: 100%;
+            padding: 11px 14px 11px 40px;
+            border: 1px solid #d1d5db;
+            border-radius: 9px;
+            outline: none;
+            font-size: 14px;
+        }
+
+        .search-box input:focus {
+            border-color: #2563eb;
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+        }
+
+        .search-icon {
+            position: absolute;
+            left: 13px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #6b7280;
+        }
+
+        .table-container {
+            width: 100%;
+            overflow-x: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th {
+            background: #f9fafb;
+            color: #6b7280;
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            padding: 14px 18px;
+            text-align: left;
+            white-space: nowrap;
+        }
+
+        td {
+            padding: 15px 18px;
+            border-top: 1px solid #f0f0f0;
+            font-size: 14px;
+        }
+
+        tr:hover td {
+            background: #fafafa;
+        }
+
+        .imei {
+            font-family: monospace;
+            font-size: 14px;
+            font-weight: 600;
+            letter-spacing: 0.4px;
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 6px 10px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: bold;
+        }
+
+        .badge-disponible {
+            background: #dcfce7;
+            color: #15803d;
+        }
+
+        .badge-reservado {
+            background: #fef3c7;
+            color: #92400e;
+        }
+
+        .badge-vendido {
+            background: #fee2e2;
+            color: #b91c1c;
+        }
+
+        .empty {
+            text-align: center;
+            padding: 40px;
+            color: #9ca3af;
+        }
+
+        .entregado-texto {
+            color: #9ca3af;
+            font-size: 13px;
+        }
+
+        .acciones {
+            display: flex;
+            gap: 6px;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+
+        .import-form {
+            display: none;
+        }
+
+        .form-agregar {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .form-agregar input {
+            padding: 10px 14px;
+            border: 1px solid #d1d5db;
+            border-radius: 9px;
+            font-size: 14px;
+            outline: none;
+        }
+
+        .form-agregar input:focus {
+            border-color: #2563eb;
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+        }
+
+        @media (max-width: 900px) {
+            .sidebar {
+                width: 200px;
+                padding: 15px 12px;
+            }
+
+            .main {
+                margin-left: 200px;
+                padding: 20px;
+                width: calc(100% - 200px);
+            }
+
+            .stats {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            .panel-header {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .search-box {
+                width: 100%;
+            }
+
+            .topbar {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .form-agregar {
+                flex-direction: column;
+                align-items: stretch;
+            }
+        }
+
+        @media (max-width: 700px) {
+            .sidebar {
+                position: relative;
+                width: 100%;
+                height: auto;
+                padding: 15px;
+            }
+
+            .sidebar .menu-title {
+                display: none;
+            }
+
+            .menu-item {
+                display: inline-flex;
+                margin-right: 5px;
+            }
+
+            .main {
+                margin-left: 0;
+                padding: 15px;
+                width: 100%;
+            }
+
+            .stats {
+                grid-template-columns: 1fr;
+            }
+
+            .topbar {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .topbar .btn {
+                width: 100%;
+            }
+
+            .acciones {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="layout">
+
+        <!-- SIDEBAR -->
+        <aside class="sidebar">
+            <div class="logo">📦 Inventario</div>
+            <div class="menu-title">Módulos</div>
+            <a href="/" class="menu-item">🏠 Inicio</a>
+            <a href="/chips" class="menu-item">📱 Chips</a>
+            <a href="/celulares" class="menu-item active">📲 Celulares</a>
+            <a href="/personas" class="menu-item">👤 Personas</a>
+            <div class="menu-item disabled">🎧 Accesorios</div>
+        </aside>
+
+        <!-- CONTENIDO PRINCIPAL -->
+        <main class="main">
+
+            <!-- CABECERA -->
+            <div class="topbar">
+                <div class="title-area">
+                    <h1>📲 Inventario de Celulares</h1>
+                    <p>Gestiona tus celulares por IMEI, modelo y disponibilidad.</p>
+                </div>
+                <div>
+                    <button type="button" class="btn btn-primary"
+                        onclick="document.getElementById('archivoExcel').click()">
+                        📥 Importar Excel
+                    </button>
+                    <form id="formImportar" class="import-form" action="/importar_celulares" method="POST"
+                        enctype="multipart/form-data">
+                        <input type="file" id="archivoExcel" name="archivo" accept=".xlsx,.xls"
+                            onchange="enviarExcel()">
+                    </form>
+                </div>
+            </div>
+
+            <!-- MENSAJES FLASH -->
+            {% with mensajes = get_flashed_messages() %}
+            {% if mensajes %}
+            <div class="flash-container">
+                {% for mensaje in mensajes %}
+                <div class="flash">{{ mensaje }}</div>
+                {% endfor %}
+            </div>
+            {% endif %}
+            {% endwith %}
+
+            <!-- ESTADÍSTICAS -->
+            <div class="stats">
+                <div class="stat-card">
+                    <div class="stat-label">Total de celulares</div>
+                    <div class="stat-number stat-total">{{ total }}</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">Disponibles</div>
+                    <div class="stat-number stat-disponible">{{ disponibles }}</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">Reservados</div>
+                    <div class="stat-number stat-reservado">{{ reservados }}</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">Vendidos</div>
+                    <div class="stat-number stat-vendido">{{ vendidos }}</div>
+                </div>
+            </div>
+
+            <!-- FORMULARIO PARA AGREGAR CELULAR MANUAL -->
+            <div style="margin-bottom:20px;">
+                <form class="form-agregar" action="/celulares/agregar" method="POST">
+                    <input type="text" name="imei" placeholder="IMEI (15 dígitos)" required>
+                    <input type="text" name="modelo" placeholder="Modelo" required>
+                    <input type="text" name="marca" placeholder="Marca" required>
+                    <button type="submit" class="btn btn-primary">➕ Agregar</button>
+                </form>
+            </div>
+
+            <!-- TABLA -->
+            <section class="panel">
+                <div class="panel-header">
+                    <h2>Celulares registrados</h2>
+                    <div class="search-box">
+                        <span class="search-icon">🔎</span>
+                        <input type="text" id="buscador" placeholder="Buscar por IMEI, modelo o marca..."
+                            autocomplete="off">
+                    </div>
+                </div>
+
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>#</th>
+                                <th>IMEI</th>
+                                <th>Modelo</th>
+                                <th>Marca</th>
+                                <th>Estado</th>
+                                <th>Acción</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tablaCelulares">
+                            {% if celulares %}
+                            {% for celular in celulares %}
+                            <tr class="fila-celular" data-id="{{ celular.id }}">
+                                <td>{{ loop.index }}</td>
+                                <td class="imei">{{ celular.imei }}</td>
+                                <td>{{ celular.modelo }}</td>
+                                <td>{{ celular.marca }}</td>
+                                <td>
+                                    {% if celular.estado == "Disponible" %}
+                                    <span class="badge badge-disponible">🟢 Disponible</span>
+                                    {% elif celular.estado == "Reservado" %}
+                                    <span class="badge badge-reservado">🟡 Reservado</span>
+                                    {% else %}
+                                    <span class="badge badge-vendido">🔴 Vendido</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <div class="acciones">
+                                        {% if celular.estado == "Disponible" %}
+                                        <form action="/celulares/reservar/{{ celular.id }}" method="POST"
+                                            style="display:inline;">
+                                            <button type="submit" class="btn btn-warning btn-sm">📌 Reservar</button>
+                                        </form>
+                                        <form action="/celulares/vender/{{ celular.id }}" method="POST"
+                                            style="display:inline;">
+                                            <button type="submit" class="btn btn-success btn-sm"
+                                                onclick="return confirm('¿Marcar este celular como VENDIDO?')">
+                                                💰 Vender
+                                            </button>
+                                        </form>
+                                        <form action="/celulares/eliminar/{{ celular.id }}" method="POST"
+                                            style="display:inline;">
+                                            <button type="submit" class="btn btn-danger btn-sm"
+                                                onclick="return confirm('¿Eliminar este celular permanentemente?')">
+                                                🗑️ Eliminar
+                                            </button>
+                                        </form>
+
+                                        {% elif celular.estado == "Reservado" %}
+                                        <form action="/celulares/vender/{{ celular.id }}" method="POST"
+                                            style="display:inline;">
+                                            <button type="submit" class="btn btn-success btn-sm"
+                                                onclick="return confirm('¿Marcar este celular como VENDIDO?')">
+                                                💰 Vender
+                                            </button>
+                                        </form>
+                                        <form action="/celulares/cancelar_reserva/{{ celular.id }}" method="POST"
+                                            style="display:inline;">
+                                            <button type="submit" class="btn btn-danger btn-sm"
+                                                onclick="return confirm('¿Cancelar la reserva de este celular?')">
+                                                ❌ Cancelar reserva
+                                            </button>
+                                        </form>
+
+                                        {% else %}
+                                        <span class="entregado-texto">✅ Vendido</span>
+                                        {% endif %}
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                            {% else %}
+                            <tr>
+                                <td colspan="6" class="empty">
+                                    No hay celulares registrados todavía.
+                                    <br><br>
+                                    Importa un archivo Excel o agrega uno manualmente.
+                                </td>
+                            </tr>
+                            {% endif %}
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+        </main>
+    </div>
+
+    <script>
+        /* ================================
+           IMPORTAR EXCEL
+        ================================= */
+        function enviarExcel() {
+            const input = document.getElementById("archivoExcel");
+            if (input.files.length > 0) {
+                document.getElementById("formImportar").submit();
+            }
+        }
+
+        /* ================================
+           BUSCADOR
+        ================================= */
+        const buscador = document.getElementById("buscador");
+        buscador.addEventListener("input", function () {
+            const texto = this.value.trim().toLowerCase();
+            const filas = document.querySelectorAll(".fila-celular");
+
+            filas.forEach(function (fila) {
+                const imei = fila.querySelector(".imei")?.textContent.toLowerCase() || "";
+                const modelo = fila.querySelector("td:nth-child(3)")?.textContent.toLowerCase() || "";
+                const marca = fila.querySelector("td:nth-child(4)")?.textContent.toLowerCase() || "";
+
+                if (texto === "") {
+                    fila.style.display = "";
+                    return;
+                }
+
+                if (imei.includes(texto) || modelo.includes(texto) || marca.includes(texto)) {
+                    fila.style.display = "";
+                } else {
+                    fila.style.display = "none";
+                }
+            });
+        });
+    </script>
+
+</body>
+
+</html>

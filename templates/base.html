@@ -1,0 +1,428 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gestión de Chips</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <div class="dashboard">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <h2><i class="bi bi-sim"></i> Inventario</h2>
+            </div>
+            <nav class="sidebar-nav">
+                <a href="/" class="nav-item">
+                    <i class="bi bi-house"></i>
+                    <span>Inicio</span>
+                </a>
+                <a href="/chips" class="nav-item active">
+                    <i class="bi bi-sim"></i>
+                    <span>Chips</span>
+                </a>
+                <a href="#" class="nav-item disabled">
+                    <i class="bi bi-headphones"></i>
+                    <span>Accesorios</span>
+                    <span class="badge-proximo">Próximo</span>
+                </a>
+                <a href="#" class="nav-item disabled">
+                    <i class="bi bi-phone"></i>
+                    <span>Celulares</span>
+                    <span class="badge-proximo">Próximo</span>
+                </a>
+            </nav>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <header class="top-bar">
+                <h1>Gestión de Chips</h1>
+                <div class="user-info">
+                    <span>Bienvenido</span>
+                    <i class="bi bi-person-circle"></i>
+                </div>
+            </header>
+
+            <div class="content">
+                <!-- Estadísticas -->
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-icon total">
+                            <i class="bi bi-sim"></i>
+                        </div>
+                        <div class="stat-info">
+                            <span class="stat-label">Total</span>
+                            <span class="stat-number">{{ total }}</span>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon available">
+                            <i class="bi bi-check-circle"></i>
+                        </div>
+                        <div class="stat-info">
+                            <span class="stat-label">Disponibles</span>
+                            <span class="stat-number">{{ disponibles }}</span>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon delivered">
+                            <i class="bi bi-box-seam"></i>
+                        </div>
+                        <div class="stat-info">
+                            <span class="stat-label">Entregados</span>
+                            <span class="stat-number">{{ entregados }}</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Acciones -->
+                <div class="actions-bar">
+                    <div class="search-container">
+                        <i class="bi bi-search search-icon"></i>
+                        <input type="text" id="buscador" class="search-input" 
+                               placeholder="Buscar por los últimos 6 u 8 dígitos..." 
+                               autocomplete="off">
+                    </div>
+                    <button class="btn-import" id="btnImportar">
+                        <i class="bi bi-upload"></i> Importar Excel
+                    </button>
+                </div>
+
+                <!-- Tabla de Chips -->
+                <div class="table-container">
+                    <table class="chips-table">
+                        <thead>
+                            <tr>
+                                <th>#</th>
+                                <th>ICCID</th>
+                                <th>Estado</th>
+                                <th>Fecha de Entrega</th>
+                                <th>Entregado a</th>
+                                <th>Acción</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tablaChips">
+                            {% for chip in chips %}
+                            <tr data-id="{{ chip.id }}" data-estado="{{ chip.estado }}">
+                                <td>{{ loop.index }}</td>
+                                <td class="iccid-text">{{ chip.iccid }}</td>
+                                <td>
+                                    <span class="badge {{ 'badge-success' if chip.estado == 'Disponible' else 'badge-primary' }}">
+                                        {{ chip.estado }}
+                                    </span>
+                                </td>
+                                <td>{{ chip.fecha_entrega or '—' }}</td>
+                                <td>{{ chip.persona_entregada or '—' }}</td>
+                                <td>
+                                    {% if chip.estado == 'Disponible' %}
+                                    <button class="btn-entregar" data-id="{{ chip.id }}" data-iccid="{{ chip.iccid }}">
+                                        <i class="bi bi-box-arrow-right"></i> Entregar
+                                    </button>
+                                    {% else %}
+                                    <span class="text-muted">Registrado</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% else %}
+                            <tr>
+                                <td colspan="6" class="text-center">No hay chips registrados</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Modal de Entrega -->
+    <div class="modal-overlay" id="modalEntrega">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2><i class="bi bi-box-arrow-right"></i> Registrar Entrega</h2>
+                <button class="modal-close" id="btnCerrarModal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label>ICCID</label>
+                    <div class="iccid-display" id="iccidDisplay">895110113910215000</div>
+                </div>
+                <div class="form-group">
+                    <label for="fechaEntrega">Fecha de Entrega</label>
+                    <input type="date" id="fechaEntrega" class="form-input">
+                </div>
+                <div class="form-group">
+                    <label for="personaSelect">Entregado a</label>
+                    <select id="personaSelect" class="form-input">
+                        <option value="">Seleccionar persona...</option>
+                    </select>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn-cancel" id="btnCancelar">Cancelar</button>
+                <button class="btn-confirm" id="btnConfirmarEntrega">
+                    <i class="bi bi-check-circle"></i> Confirmar Entrega
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal de Importar -->
+    <div class="modal-overlay" id="modalImportar">
+        <div class="modal-content modal-import">
+            <div class="modal-header">
+                <h2><i class="bi bi-upload"></i> Importar Excel</h2>
+                <button class="modal-close" id="btnCerrarImportar">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label>Selecciona el archivo Excel</label>
+                    <div class="file-upload-area" id="fileUploadArea">
+                        <i class="bi bi-file-earmark-excel"></i>
+                        <p>Arrastra o haz clic para seleccionar archivo</p>
+                        <span class="file-types">.xlsx, .xls</span>
+                        <input type="file" id="fileInput" accept=".xlsx,.xls" style="display:none">
+                    </div>
+                    <div id="fileInfo" style="display:none;">
+                        <i class="bi bi-check-circle" style="color: var(--success);"></i>
+                        <span id="fileName">archivo.xlsx</span>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn-cancel" id="btnCancelarImportar">Cancelar</button>
+                <button class="btn-confirm" id="btnConfirmarImportar" disabled>
+                    <i class="bi bi-upload"></i> Importar
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+    <script>
+        let chipSeleccionado = null;
+        let archivoSeleccionado = null;
+
+        // ==================== BUSCADOR EN TIEMPO REAL ====================
+        $('#buscador').on('input', function() {
+            const termino = $(this).val().trim();
+            if (termino.length >= 3) {
+                $.ajax({
+                    url: '/api/buscar',
+                    data: { q: termino },
+                    success: function(data) {
+                        const tbody = $('#tablaChips');
+                        tbody.empty();
+                        if (data.length === 0) {
+                            tbody.html('<tr><td colspan="6" class="text-center">No se encontraron resultados</td></tr>');
+                            return;
+                        }
+                        data.forEach(function(chip, index) {
+                            const row = `
+                                <tr data-id="${chip.id}" data-estado="${chip.estado}">
+                                    <td>${index + 1}</td>
+                                    <td class="iccid-text">${chip.iccid}</td>
+                                    <td>
+                                        <span class="badge ${chip.estado === 'Disponible' ? 'badge-success' : 'badge-primary'}">
+                                            ${chip.estado}
+                                        </span>
+                                    </td>
+                                    <td>${chip.fecha_entrega || '—'}</td>
+                                    <td>${chip.persona_entregada || '—'}</td>
+                                    <td>
+                                        ${chip.estado === 'Disponible' ? 
+                                            `<button class="btn-entregar" data-id="${chip.id}" data-iccid="${chip.iccid}">
+                                                <i class="bi bi-box-arrow-right"></i> Entregar
+                                            </button>` : 
+                                            '<span class="text-muted">Registrado</span>'
+                                        }
+                                    </td>
+                                </tr>
+                            `;
+                            tbody.append(row);
+                        });
+                        // Re-asignar eventos a los nuevos botones
+                        $('.btn-entregar').on('click', function() {
+                            abrirModalEntrega($(this).data('id'), $(this).data('iccid'));
+                        });
+                    }
+                });
+            } else if (termino.length === 0) {
+                // Si el campo está vacío, recargar la tabla original
+                location.reload();
+            }
+        });
+
+        // ==================== MODAL ENTREGA ====================
+        function abrirModalEntrega(chipId, iccid) {
+            chipSeleccionado = chipId;
+            $('#iccidDisplay').text(iccid);
+            
+            // Fecha actual
+            const hoy = new Date().toISOString().split('T')[0];
+            $('#fechaEntrega').val(hoy);
+            
+            // Cargar personas
+            $.ajax({
+                url: '/api/personas',
+                success: function(data) {
+                    const select = $('#personaSelect');
+                    select.empty().append('<option value="">Seleccionar persona...</option>');
+                    data.forEach(function(persona) {
+                        select.append(`<option value="${persona.id}">${persona.nombre}</option>`);
+                    });
+                }
+            });
+            
+            $('#modalEntrega').fadeIn(300);
+        }
+
+        $('.btn-entregar').on('click', function() {
+            abrirModalEntrega($(this).data('id'), $(this).data('iccid'));
+        });
+
+        $('#btnCerrarModal, #btnCancelar').on('click', function() {
+            $('#modalEntrega').fadeOut(300);
+        });
+
+        $('#modalEntrega').on('click', function(e) {
+            if ($(e.target).is(this)) {
+                $(this).fadeOut(300);
+            }
+        });
+
+        // ==================== CONFIRMAR ENTREGA ====================
+        $('#btnConfirmarEntrega').on('click', function() {
+            const personaId = $('#personaSelect').val();
+            const fecha = $('#fechaEntrega').val();
+            
+            if (!personaId) {
+                alert('Por favor selecciona una persona');
+                return;
+            }
+            if (!fecha) {
+                alert('Por favor selecciona una fecha');
+                return;
+            }
+            
+            $.ajax({
+                url: '/api/entregar',
+                method: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify({
+                    chip_id: chipSeleccionado,
+                    persona_id: parseInt(personaId),
+                    fecha: fecha
+                }),
+                success: function(response) {
+                    if (response.success) {
+                        alert('✅ ' + response.message);
+                        location.reload();
+                    } else {
+                        alert('❌ ' + response.message);
+                    }
+                },
+                error: function() {
+                    alert('❌ Error al procesar la entrega');
+                }
+            });
+        });
+
+        // ==================== MODAL IMPORTAR ====================
+        $('#btnImportar').on('click', function() {
+            archivoSeleccionado = null;
+            $('#fileInfo').hide();
+            $('#btnConfirmarImportar').prop('disabled', true);
+            $('#fileInput').val('');
+            $('#modalImportar').fadeIn(300);
+        });
+
+        $('#btnCerrarImportar, #btnCancelarImportar').on('click', function() {
+            $('#modalImportar').fadeOut(300);
+        });
+
+        $('#modalImportar').on('click', function(e) {
+            if ($(e.target).is(this)) {
+                $(this).fadeOut(300);
+            }
+        });
+
+        // ==================== UPLOAD ARCHIVO ====================
+        $('#fileUploadArea').on('click', function() {
+            $('#fileInput').click();
+        });
+
+        $('#fileUploadArea').on('dragover', function(e) {
+            e.preventDefault();
+            $(this).addClass('dragover');
+        });
+
+        $('#fileUploadArea').on('dragleave', function(e) {
+            e.preventDefault();
+            $(this).removeClass('dragover');
+        });
+
+        $('#fileUploadArea').on('drop', function(e) {
+            e.preventDefault();
+            $(this).removeClass('dragover');
+            if (e.originalEvent.dataTransfer.files.length) {
+                const file = e.originalEvent.dataTransfer.files[0];
+                procesarArchivo(file);
+            }
+        });
+
+        $('#fileInput').on('change', function() {
+            if (this.files.length) {
+                procesarArchivo(this.files[0]);
+            }
+        });
+
+        function procesarArchivo(file) {
+            const extensiones = ['.xlsx', '.xls'];
+            const ext = '.' + file.name.split('.').pop().toLowerCase();
+            if (!extensiones.includes(ext)) {
+                alert('Por favor selecciona un archivo Excel (.xlsx o .xls)');
+                return;
+            }
+            archivoSeleccionado = file;
+            $('#fileName').text(file.name);
+            $('#fileInfo').show();
+            $('#btnConfirmarImportar').prop('disabled', false);
+        }
+
+        // ==================== CONFIRMAR IMPORTAR ====================
+        $('#btnConfirmarImportar').on('click', function() {
+            if (!archivoSeleccionado) return;
+            
+            const formData = new FormData();
+            formData.append('archivo', archivoSeleccionado);
+            
+            $('#btnConfirmarImportar').prop('disabled', true).html('<i class="bi bi-hourglass-split"></i> Importando...');
+            
+            $.ajax({
+                url: '/api/importar',
+                method: 'POST',
+                data: formData,
+                processData: false,
+                contentType: false,
+                success: function(response) {
+                    if (response.success) {
+                        alert('✅ ' + response.message);
+                        location.reload();
+                    } else {
+                        alert('❌ ' + response.message);
+                        $('#btnConfirmarImportar').prop('disabled', false).html('<i class="bi bi-upload"></i> Importar');
+                    }
+                },
+                error: function() {
+                    alert('❌ Error al importar el archivo');
+                    $('#btnConfirmarImportar').prop('disabled', false).html('<i class="bi bi-upload"></i> Importar');
+                }
+            });
+        });
+    </script>
+</body>
+</html>

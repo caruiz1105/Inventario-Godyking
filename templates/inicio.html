@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Inventario</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <style>
+        .layout {
+            display: flex;
+            min-height: 100vh;
+        }
+
+        .sidebar {
+            width: 250px;
+            background: #111827;
+            color: white;
+            padding: 25px 18px;
+            flex-shrink: 0;
+            position: fixed;
+            top: 0;
+            left: 0;
+            height: 100vh;
+            overflow-y: auto;
+            z-index: 100;
+        }
+
+        .logo {
+            font-size: 22px;
+            font-weight: bold;
+            margin-bottom: 35px;
+            padding: 0 10px;
+        }
+
+        .menu-title {
+            font-size: 11px;
+            text-transform: uppercase;
+            color: #9ca3af;
+            margin: 20px 10px 10px;
+            letter-spacing: 1px;
+        }
+
+        .menu-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 13px 12px;
+            margin-bottom: 6px;
+            border-radius: 10px;
+            color: #d1d5db;
+            text-decoration: none;
+            transition: 0.2s;
+        }
+
+        .menu-item:hover {
+            background: #1f2937;
+            color: white;
+        }
+
+        .menu-item.active {
+            background: #2563eb;
+            color: white;
+        }
+
+        .menu-item.disabled {
+            opacity: 0.45;
+            cursor: not-allowed;
+        }
+
+        .main {
+            flex: 1;
+            margin-left: 250px;
+            padding: 30px;
+            min-height: 100vh;
+            background: #f5f7fb;
+        }
+
+        .header {
+            max-width: 1200px;
+            margin: 0 auto 40px;
+        }
+
+        .header h1 {
+            margin: 0;
+            font-size: 34px;
+            color: #111827;
+        }
+
+        .header p {
+            margin-top: 10px;
+            color: #6b7280;
+            font-size: 16px;
+        }
+
+        .modules {
+            max-width: 1200px;
+            margin: auto;
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 25px;
+        }
+
+        .module {
+            background: white;
+            border-radius: 20px;
+            padding: 30px;
+            min-height: 230px;
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.06);
+            text-decoration: none;
+            color: inherit;
+            transition: 0.25s;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .module:not(.disabled):hover {
+            transform: translateY(-6px);
+            box-shadow: 0 12px 30px rgba(0, 0, 0, 0.10);
+        }
+
+        .module-icon {
+            width: 65px;
+            height: 65px;
+            border-radius: 17px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 30px;
+            background: #eff6ff;
+            margin-bottom: 25px;
+        }
+
+        .module h2 {
+            margin: 0 0 10px;
+            font-size: 23px;
+            color: #111827;
+        }
+
+        .module p {
+            margin: 0;
+            color: #6b7280;
+            line-height: 1.5;
+        }
+
+        .module-arrow {
+            position: absolute;
+            right: 25px;
+            bottom: 25px;
+            font-size: 22px;
+            color: #2563eb;
+            transition: transform 0.2s ease;
+        }
+
+        .module:hover .module-arrow {
+            transform: translateX(5px);
+        }
+
+        .module.disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .module.disabled:hover {
+            transform: none;
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.06);
+        }
+
+        .coming-soon {
+            display: inline-block;
+            margin-top: 18px;
+            padding: 6px 10px;
+            border-radius: 20px;
+            background: #f3f4f6;
+            color: #6b7280;
+            font-size: 12px;
+            font-weight: bold;
+        }
+
+        @media (max-width: 900px) {
+            .sidebar {
+                width: 200px;
+                padding: 15px 12px;
+            }
+            .modules {
+                grid-template-columns: 1fr;
+            }
+            .main {
+                margin-left: 200px;
+                padding: 20px;
+            }
+            .header h1 {
+                font-size: 28px;
+            }
+        }
+
+        @media (max-width: 700px) {
+            .sidebar {
+                position: relative;
+                width: 100%;
+                height: auto;
+                padding: 15px;
+            }
+            .sidebar .menu-title {
+                display: none;
+            }
+            .menu-item {
+                display: inline-flex;
+                margin-right: 5px;
+            }
+            .main {
+                margin-left: 0;
+                padding: 15px;
+            }
+            .modules {
+                grid-template-columns: 1fr;
+            }
+            .header h1 {
+                font-size: 24px;
+            }
+        }
+    </style>
+</head>
+<body>
+
+<div class="layout">
+
+    <!-- SIDEBAR -->
+    <aside class="sidebar">
+        <div class="logo">📦 Inventario</div>
+        <div class="menu-title">Módulos</div>
+        <a href="/" class="menu-item active">🏠 Inicio</a>
+        <a href="/chips" class="menu-item">📱 Chips</a>
+        <a href="/celulares" class="menu-item">📲 Celulares</a>
+        <a href="/personas" class="menu-item">👤 Personas</a>
+        <div class="menu-item disabled">🎧 Accesorios</div>
+    </aside>
+
+    <!-- CONTENIDO PRINCIPAL -->
+    <main class="main">
+
+        <header class="header">
+            <h1>📦 Inventario</h1>
+            <p>Gestiona tus equipos y recursos de manera sencilla.</p>
+        </header>
+
+        <section class="modules">
+
+            <!-- CHIPS -->
+            <a href="/chips" class="module">
+                <div class="module-icon">📱</div>
+                <h2>Chips</h2>
+                <p>Administra los ICCID, consulta su disponibilidad y registra las entregas.</p>
+                <div class="module-arrow">→</div>
+            </a>
+
+            <!-- CELULARES -->
+            <a href="/celulares" class="module">
+                <div class="module-icon">📲</div>
+                <h2>Celulares</h2>
+                <p>Administra el inventario y las entregas de celulares.</p>
+                <div class="module-arrow">→</div>
+            </a>
+
+            <!-- ACCESORIOS -->
+            <div class="module disabled">
+                <div class="module-icon">🎧</div>
+                <h2>Accesorios</h2>
+                <p>Próximamente podrás administrar cargadores, audífonos, cables y otros accesorios.</p>
+                <span class="coming-soon">PRÓXIMAMENTE</span>
+            </div>
+
+        </section>
+
+    </main>
+
+</div>
+
+</body>
+</html>

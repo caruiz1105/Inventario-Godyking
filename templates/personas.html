@@ -1,0 +1,445 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gestión de Personas</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <style>
+        /* ==========================================
+           ESTILOS PARA GESTIÓN DE PERSONAS
+           ========================================== */
+
+        .layout {
+            display: flex;
+            min-height: 100vh;
+        }
+
+        .sidebar {
+            width: 250px;
+            background: #111827;
+            color: white;
+            padding: 25px 18px;
+            flex-shrink: 0;
+            position: fixed;
+            top: 0;
+            left: 0;
+            height: 100vh;
+            overflow-y: auto;
+            z-index: 100;
+        }
+
+        .logo {
+            font-size: 22px;
+            font-weight: bold;
+            margin-bottom: 35px;
+            padding: 0 10px;
+        }
+
+        .menu-title {
+            font-size: 11px;
+            text-transform: uppercase;
+            color: #9ca3af;
+            margin: 20px 10px 10px;
+            letter-spacing: 1px;
+        }
+
+        .menu-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 13px 12px;
+            margin-bottom: 6px;
+            border-radius: 10px;
+            color: #d1d5db;
+            text-decoration: none;
+            transition: 0.2s;
+        }
+
+        .menu-item:hover {
+            background: #1f2937;
+            color: white;
+        }
+
+        .menu-item.active {
+            background: #2563eb;
+            color: white;
+        }
+
+        .menu-item.disabled {
+            opacity: 0.45;
+            cursor: not-allowed;
+        }
+
+        .main {
+            flex: 1;
+            margin-left: 250px;
+            padding: 30px;
+            min-height: 100vh;
+            background: #f5f7fb;
+            width: calc(100% - 250px);
+        }
+
+        .topbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 20px;
+            margin-bottom: 25px;
+            flex-wrap: wrap;
+        }
+
+        .title-area h1 {
+            margin: 0;
+            font-size: 28px;
+            color: #111827;
+        }
+
+        .title-area p {
+            margin: 7px 0 0;
+            color: #6b7280;
+        }
+
+        .btn {
+            border: none;
+            border-radius: 9px;
+            padding: 11px 18px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+
+        .btn-primary {
+            background: #2563eb;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #1d4ed8;
+        }
+
+        .btn-success {
+            background: #16a34a;
+            color: white;
+        }
+
+        .btn-success:hover {
+            background: #15803d;
+        }
+
+        .btn-danger {
+            background: #dc2626;
+            color: white;
+        }
+
+        .btn-danger:hover {
+            background: #b91c1c;
+        }
+
+        .btn-secondary {
+            background: #e5e7eb;
+            color: #374151;
+        }
+
+        .btn-secondary:hover {
+            background: #d1d5db;
+        }
+
+        .btn-warning {
+            background: #f59e0b;
+            color: white;
+        }
+
+        .btn-warning:hover {
+            background: #d97706;
+        }
+
+        .flash-container {
+            margin-bottom: 20px;
+        }
+
+        .flash {
+            background: #eff6ff;
+            border: 1px solid #bfdbfe;
+            color: #1d4ed8;
+            padding: 13px 16px;
+            border-radius: 9px;
+            margin-bottom: 8px;
+        }
+
+        .panel {
+            background: white;
+            border-radius: 14px;
+            box-shadow: 0 3px 12px rgba(0, 0, 0, 0.05);
+            overflow: hidden;
+        }
+
+        .panel-header {
+            padding: 20px;
+            border-bottom: 1px solid #e5e7eb;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+
+        .panel-header h2 {
+            margin: 0;
+            font-size: 19px;
+        }
+
+        .table-container {
+            width: 100%;
+            overflow-x: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th {
+            background: #f9fafb;
+            color: #6b7280;
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            padding: 14px 18px;
+            text-align: left;
+            white-space: nowrap;
+        }
+
+        td {
+            padding: 15px 18px;
+            border-top: 1px solid #f0f0f0;
+            font-size: 14px;
+        }
+
+        tr:hover td {
+            background: #fafafa;
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 6px 10px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: bold;
+        }
+
+        .badge-habilitado {
+            background: #dcfce7;
+            color: #15803d;
+        }
+
+        .badge-deshabilitado {
+            background: #fee2e2;
+            color: #b91c1c;
+        }
+
+        .form-agregar {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .form-agregar input {
+            padding: 10px 14px;
+            border: 1px solid #d1d5db;
+            border-radius: 9px;
+            font-size: 14px;
+            outline: none;
+            min-width: 200px;
+        }
+
+        .form-agregar input:focus {
+            border-color: #2563eb;
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+        }
+
+        .btn-sm {
+            padding: 6px 12px;
+            font-size: 12px;
+            border-radius: 6px;
+        }
+
+        .acciones {
+            display: flex;
+            gap: 6px;
+            flex-wrap: wrap;
+        }
+
+        /* RESPONSIVE */
+        @media (max-width: 900px) {
+            .sidebar {
+                width: 200px;
+                padding: 15px 12px;
+            }
+
+            .main {
+                margin-left: 200px;
+                padding: 20px;
+                width: calc(100% - 200px);
+            }
+
+            .panel-header {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .form-agregar {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .form-agregar input {
+                min-width: auto;
+            }
+
+            .topbar {
+                flex-direction: column;
+                align-items: stretch;
+            }
+        }
+
+        @media (max-width: 700px) {
+            .sidebar {
+                position: relative;
+                width: 100%;
+                height: auto;
+                padding: 15px;
+            }
+
+            .sidebar .menu-title {
+                display: none;
+            }
+
+            .menu-item {
+                display: inline-flex;
+                margin-right: 5px;
+            }
+
+            .main {
+                margin-left: 0;
+                padding: 15px;
+                width: 100%;
+            }
+
+            .topbar {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .acciones {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="layout">
+
+        <!-- SIDEBAR -->
+        <aside class="sidebar">
+            <div class="logo">📦 Inventario</div>
+            <div class="menu-title">Módulos</div>
+            <a href="/" class="menu-item">🏠 Inicio</a>
+            <a href="/chips" class="menu-item active">📱 Chips</a>
+            <a href="/celulares" class="menu-item">📲 Celulares</a>
+            <a href="/personas" class="menu-item">👤 Personas</a>
+            <div class="menu-item disabled">🎧 Accesorios</div>
+        </aside>
+
+        <!-- CONTENIDO PRINCIPAL -->
+        <main class="main">
+
+            <!-- CABECERA -->
+            <div class="topbar">
+                <div class="title-area">
+                    <h1>👤 Gestión de Personas</h1>
+                    <p>Administra las personas que reciben los chips.</p>
+                </div>
+            </div>
+
+            <!-- MENSAJES FLASH -->
+            {% with mensajes = get_flashed_messages() %}
+            {% if mensajes %}
+            <div class="flash-container">
+                {% for mensaje in mensajes %}
+                <div class="flash">{{ mensaje }}</div>
+                {% endfor %}
+            </div>
+            {% endif %}
+            {% endwith %}
+
+            <!-- PANEL -->
+            <section class="panel">
+                <div class="panel-header">
+                    <h2>Lista de personas</h2>
+                    <form class="form-agregar" action="/personas/agregar" method="POST">
+                        <input type="text" name="nombre" placeholder="Nombre de la persona..." required>
+                        <button type="submit" class="btn btn-primary">➕ Agregar</button>
+                    </form>
+                </div>
+
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>#</th>
+                                <th>Nombre</th>
+                                <th>Estado</th>
+                                <th>Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% if personas %}
+                            {% for persona in personas %}
+                            <tr>
+                                <td>{{ loop.index }}</td>
+                                <td><strong>{{ persona.nombre }}</strong></td>
+                                <td>
+                                    {% if persona.activo == 1 %}
+                                    <span class="badge badge-habilitado">✅ Habilitado</span>
+                                    {% else %}
+                                    <span class="badge badge-deshabilitado">❌ Deshabilitado</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <div class="acciones">
+                                        <form action="/personas/toggle/{{ persona.id }}" method="POST"
+                                            style="display:inline;">
+                                            {% if persona.activo == 1 %}
+                                            <button type="submit" class="btn btn-warning btn-sm">🔽
+                                                Deshabilitar</button>
+                                            {% else %}
+                                            <button type="submit" class="btn btn-success btn-sm">🔼 Habilitar</button>
+                                            {% endif %}
+                                        </form>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                            {% else %}
+                            <tr>
+                                <td colspan="4" class="empty" style="text-align:center;padding:40px;color:#9ca3af;">
+                                    No hay personas registradas.
+                                </td>
+                            </tr>
+                            {% endif %}
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+        </main>
+    </div>
+
+</body>
+
+</html>

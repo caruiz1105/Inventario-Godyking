@@ -1,0 +1,904 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Inventario de Chips</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <style>
+        /* ==========================================
+           ESTILOS ESPECÍFICOS PARA CHIPS
+           ========================================== */
+
+        /* Layout con sidebar - IGUAL QUE INICIO */
+        .layout {
+            display: flex;
+            min-height: 100vh;
+        }
+
+        /* SIDEBAR - IGUAL QUE INICIO */
+        .sidebar {
+            width: 250px;
+            background: #111827;
+            color: white;
+            padding: 25px 18px;
+            flex-shrink: 0;
+            position: fixed;
+            top: 0;
+            left: 0;
+            height: 100vh;
+            overflow-y: auto;
+            z-index: 100;
+        }
+
+        .logo {
+            font-size: 22px;
+            font-weight: bold;
+            margin-bottom: 35px;
+            padding: 0 10px;
+        }
+
+        .menu-title {
+            font-size: 11px;
+            text-transform: uppercase;
+            color: #9ca3af;
+            margin: 20px 10px 10px;
+            letter-spacing: 1px;
+        }
+
+        .menu-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 13px 12px;
+            margin-bottom: 6px;
+            border-radius: 10px;
+            color: #d1d5db;
+            text-decoration: none;
+            transition: 0.2s;
+        }
+
+        .menu-item:hover {
+            background: #1f2937;
+            color: white;
+        }
+
+        .menu-item.active {
+            background: #2563eb;
+            color: white;
+        }
+
+        .menu-item.disabled {
+            opacity: 0.45;
+            cursor: not-allowed;
+        }
+
+        /* CONTENIDO PRINCIPAL - CON MARGEN PARA EL SIDEBAR */
+        .main {
+            flex: 1;
+            margin-left: 250px;
+            padding: 30px;
+            min-height: 100vh;
+            background: #f5f7fb;
+            width: calc(100% - 250px);
+        }
+
+        /* TOPBAR */
+        .topbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 20px;
+            margin-bottom: 25px;
+            flex-wrap: wrap;
+        }
+
+        .title-area h1 {
+            margin: 0;
+            font-size: 28px;
+            color: #111827;
+        }
+
+        .title-area p {
+            margin: 7px 0 0;
+            color: #6b7280;
+        }
+
+        /* BOTONES */
+        .btn {
+            border: none;
+            border-radius: 9px;
+            padding: 11px 18px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+
+        .btn-primary {
+            background: #2563eb;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #1d4ed8;
+        }
+
+        .btn-success {
+            background: #16a34a;
+            color: white;
+        }
+
+        .btn-success:hover {
+            background: #15803d;
+        }
+
+        .btn-secondary {
+            background: #e5e7eb;
+            color: #374151;
+        }
+
+        .btn-secondary:hover {
+            background: #d1d5db;
+        }
+
+        .btn-warning {
+            background: #f59e0b;
+            color: white;
+        }
+
+        .btn-warning:hover {
+            background: #d97706;
+        }
+
+        .btn-danger {
+            background: #dc2626;
+            color: white;
+        }
+
+        .btn-danger:hover {
+            background: #b91c1c;
+        }
+
+        /* ALERTAS */
+        .flash-container {
+            margin-bottom: 20px;
+        }
+
+        .flash {
+            background: #eff6ff;
+            border: 1px solid #bfdbfe;
+            color: #1d4ed8;
+            padding: 13px 16px;
+            border-radius: 9px;
+            margin-bottom: 8px;
+        }
+
+        /* ESTADÍSTICAS */
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 18px;
+            margin-bottom: 25px;
+        }
+
+        .stat-card {
+            background: white;
+            border-radius: 14px;
+            padding: 20px;
+            box-shadow: 0 3px 12px rgba(0, 0, 0, 0.05);
+        }
+
+        .stat-label {
+            color: #6b7280;
+            font-size: 14px;
+            margin-bottom: 8px;
+        }
+
+        .stat-number {
+            font-size: 30px;
+            font-weight: bold;
+        }
+
+        .stat-total {
+            color: #2563eb;
+        }
+
+        .stat-disponible {
+            color: #16a34a;
+        }
+
+        .stat-entregado {
+            color: #dc2626;
+        }
+
+        .stat-devuelto {
+            color: #f59e0b;
+        }
+
+        /* PANEL */
+        .panel {
+            background: white;
+            border-radius: 14px;
+            box-shadow: 0 3px 12px rgba(0, 0, 0, 0.05);
+            overflow: hidden;
+        }
+
+        .panel-header {
+            padding: 20px;
+            border-bottom: 1px solid #e5e7eb;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+
+        .panel-header h2 {
+            margin: 0;
+            font-size: 19px;
+        }
+
+        /* BUSCADOR */
+        .search-box {
+            position: relative;
+            width: 320px;
+        }
+
+        .search-box input {
+            width: 100%;
+            padding: 11px 14px 11px 40px;
+            border: 1px solid #d1d5db;
+            border-radius: 9px;
+            outline: none;
+            font-size: 14px;
+        }
+
+        .search-box input:focus {
+            border-color: #2563eb;
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+        }
+
+        .search-icon {
+            position: absolute;
+            left: 13px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #6b7280;
+        }
+
+        /* TABLA */
+        .table-container {
+            width: 100%;
+            overflow-x: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th {
+            background: #f9fafb;
+            color: #6b7280;
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            padding: 14px 18px;
+            text-align: left;
+            white-space: nowrap;
+        }
+
+        td {
+            padding: 15px 18px;
+            border-top: 1px solid #f0f0f0;
+            font-size: 14px;
+        }
+
+        tr:hover td {
+            background: #fafafa;
+        }
+
+        .iccid {
+            font-family: monospace;
+            font-size: 14px;
+            font-weight: 600;
+            letter-spacing: 0.4px;
+        }
+
+        /* BADGES */
+        .badge {
+            display: inline-block;
+            padding: 6px 10px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: bold;
+        }
+
+        .badge-disponible {
+            background: #dcfce7;
+            color: #15803d;
+        }
+
+        .badge-entregado {
+            background: #fee2e2;
+            color: #b91c1c;
+        }
+
+        .badge-devuelto {
+            background: #fef3c7;
+            color: #92400e;
+        }
+
+        .badge-habilitado {
+            background: #dcfce7;
+            color: #15803d;
+        }
+
+        .badge-deshabilitado {
+            background: #fee2e2;
+            color: #b91c1c;
+        }
+
+        .empty {
+            text-align: center;
+            padding: 40px;
+            color: #9ca3af;
+        }
+
+        /* BOTÓN ENTREGAR */
+        .btn-entregar {
+            border: none;
+            background: #16a34a;
+            color: white;
+            padding: 8px 16px;
+            border-radius: 8px;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+
+        .btn-entregar:hover {
+            background: #15803d;
+            transform: translateY(-1px);
+        }
+
+        .btn-entregar.btn-reentregar {
+            background: #f59e0b;
+        }
+
+        .btn-entregar.btn-reentregar:hover {
+            background: #d97706;
+        }
+
+        .btn-sm {
+            padding: 6px 12px;
+            font-size: 12px;
+            border-radius: 6px;
+        }
+
+        .entregado-texto {
+            color: #9ca3af;
+            font-size: 13px;
+        }
+
+        .acciones {
+            display: flex;
+            gap: 6px;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+
+        /* MODAL */
+        .modal {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(17, 24, 39, 0.55);
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            z-index: 1000;
+        }
+
+        .modal.show {
+            display: flex !important;
+        }
+
+        .modal-content {
+            background: white;
+            width: 100%;
+            max-width: 480px;
+            border-radius: 16px;
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.2);
+            overflow: hidden;
+            animation: aparecer 0.2s ease;
+        }
+
+        @keyframes aparecer {
+            from {
+                opacity: 0;
+                transform: translateY(-10px) scale(0.98);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0) scale(1);
+            }
+        }
+
+        .modal-header {
+            padding: 20px;
+            border-bottom: 1px solid #e5e7eb;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .modal-header h3 {
+            margin: 0;
+            font-size: 20px;
+        }
+
+        .close {
+            border: none;
+            background: transparent;
+            font-size: 25px;
+            cursor: pointer;
+            color: #6b7280;
+            padding: 0 8px;
+        }
+
+        .close:hover {
+            color: #111827;
+        }
+
+        .modal-body {
+            padding: 20px;
+        }
+
+        .form-group {
+            margin-bottom: 18px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 7px;
+            font-size: 13px;
+            font-weight: bold;
+            color: #374151;
+        }
+
+        .form-control {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #d1d5db;
+            border-radius: 9px;
+            font-size: 14px;
+            outline: none;
+            background: white;
+        }
+
+        .form-control:focus {
+            border-color: #2563eb;
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+        }
+
+        .form-control[readonly] {
+            background: #f3f4f6;
+            cursor: not-allowed;
+        }
+
+        .modal-footer {
+            padding: 16px 20px;
+            border-top: 1px solid #e5e7eb;
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+        }
+
+        .import-form {
+            display: none;
+        }
+
+        /* RESPONSIVE */
+        @media (max-width: 900px) {
+            .sidebar {
+                width: 200px;
+                padding: 15px 12px;
+            }
+
+            .main {
+                margin-left: 200px;
+                padding: 20px;
+                width: calc(100% - 200px);
+            }
+
+            .stats {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            .panel-header {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .search-box {
+                width: 100%;
+            }
+
+            .topbar {
+                flex-direction: column;
+                align-items: stretch;
+            }
+        }
+
+        @media (max-width: 700px) {
+            .sidebar {
+                position: relative;
+                width: 100%;
+                height: auto;
+                padding: 15px;
+            }
+
+            .sidebar .menu-title {
+                display: none;
+            }
+
+            .menu-item {
+                display: inline-flex;
+                margin-right: 5px;
+            }
+
+            .main {
+                margin-left: 0;
+                padding: 15px;
+                width: 100%;
+            }
+
+            .stats {
+                grid-template-columns: 1fr;
+            }
+
+            .topbar {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .topbar .btn {
+                width: 100%;
+            }
+
+            .modal-content {
+                margin: 10px;
+            }
+
+            .modal-footer {
+                flex-direction: column;
+            }
+
+            .modal-footer .btn {
+                width: 100%;
+            }
+
+            .acciones {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="layout">
+
+        <!-- SIDEBAR -->
+        <aside class="sidebar">
+            <div class="logo">📦 Inventario</div>
+            <div class="menu-title">Módulos</div>
+            <a href="/" class="menu-item">🏠 Inicio</a>
+            <a href="/chips" class="menu-item active">📱 Chips</a>
+            <a href="/celulares" class="menu-item">📲 Celulares</a>
+            <a href="/personas" class="menu-item">👤 Personas</a>
+            <div class="menu-item disabled">🎧 Accesorios</div>
+        </aside>
+
+        <!-- CONTENIDO PRINCIPAL -->
+        <main class="main">
+
+            <!-- CABECERA -->
+            <div class="topbar">
+                <div class="title-area">
+                    <h1>Inventario de Chips</h1>
+                    <p>Gestiona tus ICCID, disponibilidad y entregas.</p>
+                </div>
+                <div>
+                    <button type="button" class="btn btn-primary"
+                        onclick="document.getElementById('archivoExcel').click()">
+                        📥 Importar Excel
+                    </button>
+                    <form id="formImportar" class="import-form" action="/importar" method="POST"
+                        enctype="multipart/form-data">
+                        <input type="file" id="archivoExcel" name="archivo" accept=".xlsx,.xls"
+                            onchange="enviarExcel()">
+                    </form>
+                </div>
+            </div>
+
+            <!-- MENSAJES FLASH -->
+            {% with mensajes = get_flashed_messages() %}
+            {% if mensajes %}
+            <div class="flash-container">
+                {% for mensaje in mensajes %}
+                <div class="flash">{{ mensaje }}</div>
+                {% endfor %}
+            </div>
+            {% endif %}
+            {% endwith %}
+
+            <!-- ESTADÍSTICAS -->
+            <div class="stats">
+                <div class="stat-card">
+                    <div class="stat-label">Total de chips</div>
+                    <div class="stat-number stat-total">{{ total }}</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">Disponibles</div>
+                    <div class="stat-number stat-disponible">{{ disponibles }}</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">Entregados</div>
+                    <div class="stat-number stat-entregado">{{ entregados }}</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">Devueltos</div>
+                    <div class="stat-number stat-devuelto">{{ devueltos }}</div>
+                </div>
+            </div>
+
+            <!-- TABLA -->
+            <section class="panel">
+                <div class="panel-header">
+                    <h2>Chips registrados</h2>
+                    <div class="search-box">
+                        <span class="search-icon">🔎</span>
+                        <input type="text" id="buscador" placeholder="Buscar últimos 6 u 8 dígitos..."
+                            autocomplete="off">
+                    </div>
+                </div>
+
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>#</th>
+                                <th>ICCID</th>
+                                <th>Estado</th>
+                                <th>Persona</th>
+                                <th>Fecha de entrega</th>
+                                <th>Acción</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tablaChips">
+                            {% if chips %}
+                            {% for chip in chips %}
+                            <tr class="fila-chip" data-id="{{ chip.id }}">
+                                <td>{{ loop.index }}</td>
+                                <td class="iccid">{{ chip.iccid }}</td>
+                                <td>
+                                    {% if chip.estado == "Disponible" %}
+                                    <span class="badge badge-disponible">🟢 Disponible</span>
+                                    {% elif chip.estado == "Devuelto" %}
+                                    <span class="badge badge-devuelto">🟡 Devuelto</span>
+                                    {% else %}
+                                    <span class="badge badge-entregado">🔴 Entregado</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if chip.persona %}
+                                    {{ chip.persona }}
+                                    {% if chip.persona_activo == 1 %}
+                                    <span class="badge badge-habilitado"
+                                        style="font-size:10px; padding:2px 8px; margin-left:6px;">✅</span>
+                                    {% else %}
+                                    <span class="badge badge-deshabilitado"
+                                        style="font-size:10px; padding:2px 8px; margin-left:6px;">❌</span>
+                                    {% endif %}
+                                    {% else %}
+                                    —
+                                    {% endif %}
+                                </td>
+                                <td>{{ chip.fecha_entrega or '—' }}</td>
+                                <td>
+                                    <div class="acciones">
+                                        {% if chip.estado == "Disponible" %}
+                                        <button type="button" class="btn-entregar"
+                                            onclick="abrirEntrega('{{ chip.id }}', '{{ chip.iccid }}')">
+                                            📤 Entregar
+                                        </button>
+
+                                        {% elif chip.estado == "Devuelto" %}
+                                        <button type="button" class="btn-entregar btn-reentregar"
+                                            onclick="abrirEntrega('{{ chip.id }}', '{{ chip.iccid }}')">
+                                            🔄 Re-entregar
+                                        </button>
+                                        <form action="/eliminar/{{ chip.id }}" method="POST" style="display:inline;">
+                                            <button type="submit" class="btn btn-danger btn-sm"
+                                                onclick="return confirm('¿Eliminar este chip permanentemente?')">
+                                                🗑️ Eliminar
+                                            </button>
+                                        </form>
+
+                                        {% else %}
+                                        <span class="entregado-texto">📦 Entregado</span>
+                                        <form action="/devolver/{{ chip.id }}" method="POST" style="display:inline;">
+                                            <button type="submit" class="btn btn-warning btn-sm">
+                                                🔄 Devolver
+                                            </button>
+                                        </form>
+                                        {% endif %}
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                            {% else %}
+                            <tr>
+                                <td colspan="6" class="empty">
+                                    No hay chips registrados todavía.
+                                    <br><br>
+                                    Importa tu archivo Excel para comenzar.
+                                </td>
+                            </tr>
+                            {% endif %}
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+        </main>
+    </div>
+
+    <!-- MODAL DE ENTREGA -->
+    <div id="modalEntrega" class="modal" onclick="cerrarModalFondo(event)">
+        <div class="modal-content" onclick="event.stopPropagation()">
+            <div class="modal-header">
+                <h3>📦 Entregar chip</h3>
+                <button type="button" class="close" onclick="cerrarEntrega()">×</button>
+            </div>
+
+            <form action="/entregar" method="POST">
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label for="iccidModal">ICCID</label>
+                        <input type="text" id="iccidModal" class="form-control" readonly>
+                    </div>
+                    <input type="hidden" id="chipIdModal" name="chip_id">
+                    <div class="form-group">
+                        <label for="persona">Entregar a</label>
+                        <select name="persona_id" id="persona" class="form-control" required>
+                            <option value="">Selecciona una persona</option>
+                            {% for persona in personas %}
+                            <option value="{{ persona.id }}">{{ persona.nombre }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="fecha">Fecha de entrega</label>
+                        <input type="date" name="fecha" id="fecha" class="form-control" required>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" onclick="cerrarEntrega()">Cancelar</button>
+                    <button type="submit" class="btn btn-success">✓ Confirmar entrega</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        /* ================================
+           IMPORTAR EXCEL
+        ================================= */
+        function enviarExcel() {
+            const input = document.getElementById("archivoExcel");
+            if (input.files.length > 0) {
+                document.getElementById("formImportar").submit();
+            }
+        }
+
+        /* ================================
+           ABRIR MODAL
+        ================================= */
+        function abrirEntrega(chipId, iccid) {
+            const modal = document.getElementById("modalEntrega");
+            const chipInput = document.getElementById("chipIdModal");
+            const iccidInput = document.getElementById("iccidModal");
+            const fechaInput = document.getElementById("fecha");
+            const personaInput = document.getElementById("persona");
+
+            chipInput.value = chipId;
+            iccidInput.value = iccid;
+
+            const hoy = new Date();
+            const anio = hoy.getFullYear();
+            const mes = String(hoy.getMonth() + 1).padStart(2, "0");
+            const dia = String(hoy.getDate()).padStart(2, "0");
+            fechaInput.value = `${anio}-${mes}-${dia}`;
+
+            personaInput.value = "";
+            modal.classList.add("show");
+        }
+
+        /* ================================
+           CERRAR MODAL
+        ================================= */
+        function cerrarEntrega() {
+            const modal = document.getElementById("modalEntrega");
+            modal.classList.remove("show");
+        }
+
+        function cerrarModalFondo(event) {
+            if (event.target.id === "modalEntrega") {
+                cerrarEntrega();
+            }
+        }
+
+        document.addEventListener("keydown", function (event) {
+            if (event.key === "Escape") {
+                cerrarEntrega();
+            }
+        });
+
+        /* ================================
+           BUSCADOR
+        ================================= */
+        const buscador = document.getElementById("buscador");
+        buscador.addEventListener("input", function () {
+            const texto = this.value.trim().replace(/\s/g, "").toLowerCase();
+            const filas = document.querySelectorAll(".fila-chip");
+
+            filas.forEach(function (fila) {
+                const iccidElemento = fila.querySelector(".iccid");
+                if (!iccidElemento) return;
+                const iccid = iccidElemento.textContent.trim().replace(/\s/g, "").toLowerCase();
+
+                if (texto === "") {
+                    fila.style.display = "";
+                    return;
+                }
+
+                if (iccid.endsWith(texto) || iccid.includes(texto)) {
+                    fila.style.display = "";
+                } else {
+                    fila.style.display = "none";
+                }
+            });
+        });
+
+        /* ================================
+           VALIDAR FORMULARIO
+        ================================= */
+        document.querySelector("#modalEntrega form").addEventListener("submit", function (event) {
+            const persona = document.getElementById("persona").value;
+            const fecha = document.getElementById("fecha").value;
+
+            if (!persona) {
+                event.preventDefault();
+                alert("Selecciona una persona.");
+                return;
+            }
+
+            if (!fecha) {
+                event.preventDefault();
+                alert("Selecciona una fecha.");
+                return;
+            }
+        });
+    </script>
+
+</body>
+
+</html>
